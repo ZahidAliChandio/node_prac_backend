@@ -1,5 +1,7 @@
 const express = require("express");
 
+const HttpError = require("../models/http-error");
+
 const router = express.Router();
 
 const PLACES = [
@@ -23,17 +25,31 @@ router.get("/:pid", (req, res, next) => {
   const place = PLACES.find((p) => {
     return p.id === placeId;
   });
+
+  if (!place) {
+    throw new HttpError("Could not find a place for the provided id.");
+  }
+
   console.log("Places get request called");
   res.json({ place }); //=> {place} => {place:place}
 });
 
+// Error: next is used in asynchronus program and throw Error is used in Syn.
+
 router.get("/user/:uid", (req, res, next) => {
   const userId = req.params.uid;
-  const user = PLACES.filter(
-    (u) => u.creater === userId
+  const place = PLACES.filter(
+    (p) => p.creater === userId
     // return u.creater === userId;
   );
-  res.json({ user });
+  if (!place) {
+    // return res.status(404).json({ message: "Could not find place" });
+    return next(new Error("Could not find a place for the provided id.", 4040));
+
+    // error.code = 404; //these lines were before creating errorClass
+    // return next(error);
+  }
+  res.json({ place });
 });
 
 module.exports = router;
