@@ -32,20 +32,21 @@ const getPlaceById = (req, res, next) => {
 
 // Error: next is used in asynchronus program and throw Error is used in Syn.
 
-const getPlaceByUserId = (req, res, next) => {
+// There can by more than one place created by single user.
+const getPlacesByUserId = (req, res, next) => {
   const userId = req.params.uid;
-  const place = PLACES.filter(
+  const places = PLACES.filter(
     (p) => p.creator === userId
     // return u.creater === userId;
   );
-  if (!place) {
+  if (!places) {
     // return res.status(404).json({ message: "Could not find place" });
-    return next(new Error("Could not find a place for the provided id.", 4040));
+    return next(new Error("Could not find places for the provided id.", 4040));
 
     // error.code = 404; //these lines were before creating errorClass
     // return next(error);
   }
-  res.json({ place });
+  res.json({ places });
 };
 
 const deletePlace = (req, res, next) => {
@@ -90,7 +91,7 @@ const createPlace = (req, res, next) => {
 };
 
 exports.getPlaceById = getPlaceById;
-exports.getPlaceByUserId = getPlaceByUserId;
+exports.getPlacesByUserId = getPlacesByUserId;
 exports.createPlace = createPlace;
 exports.updatePlace = updatePlace;
 exports.deletePlace = deletePlace;
