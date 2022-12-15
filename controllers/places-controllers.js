@@ -50,8 +50,7 @@ const getPlaceByUserId = (req, res, next) => {
 
 const deletePlace = (req, res, next) => {
   const placeId = req.params.pid;
-  const updatedPlaces = PLACES.filter((p) => p.id !== placeId);
-  PLACES = updatedPlaces;
+  PLACES = PLACES.filter((p) => p.id !== placeId);
   res.status(201).json({ PLACES: PLACES });
 };
 
