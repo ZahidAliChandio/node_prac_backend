@@ -1,10 +1,11 @@
 const express = require("express");
 
-const HttpError = require("../models/http-error");
 const {
   getPlaceById,
   getPlaceByUserId,
+  createPlace,
 } = require("../controllers/places-controllers");
+const { application } = require("express");
 
 const router = express.Router();
 
@@ -12,8 +13,8 @@ const router = express.Router();
 
 router.get("/:pid", getPlaceById);
 
-// Error: next is used in asynchronus program and throw Error is used in Syn.
-
 router.get("/user/:uid", getPlaceByUserId);
+
+router.post("/", createPlace);
 
 module.exports = router;

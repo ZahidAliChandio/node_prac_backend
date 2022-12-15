@@ -1,3 +1,5 @@
+const { v4: uuidv4, v4 } = require("uuid");
+
 const HttpError = require("../models/http-error");
 
 const PLACES = [
@@ -10,7 +12,7 @@ const PLACES = [
       long: -73.9871516,
     },
     address: "20 W 34th St, New York, NY 1001",
-    creater: "u1",
+    creator: "u1",
   },
 ];
 
@@ -28,10 +30,12 @@ const getPlaceById = (req, res, next) => {
   res.json({ place }); //=> {place} => {place:place}
 };
 
+// Error: next is used in asynchronus program and throw Error is used in Syn.
+
 const getPlaceByUserId = (req, res, next) => {
   const userId = req.params.uid;
   const place = PLACES.filter(
-    (p) => p.creater === userId
+    (p) => p.creator === userId
     // return u.creater === userId;
   );
   if (!place) {
@@ -44,5 +48,21 @@ const getPlaceByUserId = (req, res, next) => {
   res.json({ place });
 };
 
+const createPlace = (req, res, next) => {
+  const { title, description, coordinates, address, creator } = req.body;
+  const createdPlace = {
+    id: uuidv4(),
+    title,
+    description,
+    location: coordinates,
+    address,
+    creator,
+  };
+  PLACES.push(createdPlace); // or unshift(createdPlace)
+
+  res.status(201).json({ place: createdPlace });
+};
+
 exports.getPlaceById = getPlaceById;
 exports.getPlaceByUserId = getPlaceByUserId;
+exports.createPlace = createPlace;
