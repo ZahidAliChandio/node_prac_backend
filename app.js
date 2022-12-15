@@ -1,14 +1,18 @@
 // app.js refers to server.js
-
 const express = require("express");
 const bodyParser = require("body-parser");
-const app = express();
 
 const placesRoutes = require("./routes/places-routes");
 const usersRoutes = require("./routes/users-routes");
 
+const app = express();
+
+app.use(bodyParser.json());
+
 app.use("/api/places", placesRoutes);
 app.use("/api/users", usersRoutes);
+
+app.use();
 
 app.use((error, req, res, next) => {
   if (res.headerSent) {
@@ -18,4 +22,4 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occured" });
 });
 
-app.listen(5000);
+app.listen(8000);
