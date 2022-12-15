@@ -48,6 +48,33 @@ const getPlaceByUserId = (req, res, next) => {
   res.json({ place });
 };
 
+const deletePlace = (req, res, next) => {
+  const placeId = req.params.pid;
+  const updatedPlaces = PLACES.filter((p) => p.id !== placeId);
+  PLACES = updatedPlaces;
+  res.status(201).json({ PLACES: PLACES });
+};
+
+const updatePlace = (req, res, next) => {
+  const placeId = req.params.pid;
+  const placeIndex = PLACES.findIndex((p) => p.id === placeId);
+  const { title, description, coordinates, address, creator } = req.body;
+  // const updatedPlaces = [...PLACES];
+
+  // const updatedPlace = PLACES[placeIndex]; //or the bottom one
+  const updatedPlace = { ...PLACES.find((p) => (p.id = placeId)) };
+  // const updatedPlace = updatedPlaces[placeIndex];
+  updatedPlace.title = title;
+  updatedPlace.description = description;
+  updatedPlace.coordinates = coordinates;
+  updatedPlace.address = address;
+  updatedPlace.creator = creator;
+  // updatedPlaces[placeIndex] = updatedPlace;
+  // PLACES = updatedPlaces;
+  PLACES[placeIndex] = updatedPlace;
+  res.status(201).json({ PLACES: PLACES });
+};
+
 const createPlace = (req, res, next) => {
   const { title, description, coordinates, address, creator } = req.body;
   const createdPlace = {
@@ -66,3 +93,5 @@ const createPlace = (req, res, next) => {
 exports.getPlaceById = getPlaceById;
 exports.getPlaceByUserId = getPlaceByUserId;
 exports.createPlace = createPlace;
+exports.updatePlace = updatePlace;
+exports.deletePlace = deletePlace;

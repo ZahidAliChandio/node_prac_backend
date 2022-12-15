@@ -13,6 +13,7 @@ app.use(bodyParser.json());
 app.use("/api/places", placesRoutes);
 app.use("/api/users", usersRoutes);
 
+// If unsupported route is entered.
 app.use((req, res, next) => {
   const error = new HttpError("Could not find this route.", 404);
   throw error;
