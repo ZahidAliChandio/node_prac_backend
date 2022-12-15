@@ -52,11 +52,20 @@ const getPlacesByUserId = (req, res, next) => {
 
 const deletePlace = (req, res, next) => {
   const placeId = req.params.pid;
+  if (!PLACES.find((p) => p.id === placeId)) {
+    throw new HttpError("Could not find the place", 404);
+  }
   PLACES = PLACES.filter((p) => p.id !== placeId);
   res.status(201).json({ PLACES: PLACES });
 };
 
 const updatePlace = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    // 422 Invalid inputs
+    res.status(422);
+    throw new HttpError("Invalid inputs passed, please check your inputs", 422);
+  }
   const placeId = req.params.pid;
   const placeIndex = PLACES.findIndex((p) => p.id === placeId);
   const { title, description, coordinates, address, creator } = req.body;
