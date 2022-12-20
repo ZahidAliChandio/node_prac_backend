@@ -3,6 +3,7 @@ const { validationResult } = require("express-validator");
 
 const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
+const Place = require("../models/place");
 
 const PLACES = [
   {
@@ -106,15 +107,25 @@ const createPlace = async (req, res, next) => {
     return next(error);
   }
 
-  const createdPlace = {
-    id: uuidv4(),
+  const createdPlace = new Place({
     title,
     description,
-    location: coordinates,
     address,
+    location: coordinates,
+    image:
+      "https://img.traveltriangle.com/blog/wp-content/uploads/2021/11/shutterstock_1487009060.jpg",
     creator,
-  };
-  PLACES.push(createdPlace); // or unshift(createdPlace)
+  });
+  // PLACES.push(createdPlace); // or unshift(createdPlace)
+  try {
+    await createdPlace.save();
+  } catch {
+    const error = new HttpError(
+      "Creating place failed, please try again.",
+      500
+    );
+    return next(error);
+  }
 
   res.status(201).json({ place: createdPlace });
 };
