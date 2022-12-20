@@ -19,18 +19,32 @@ const PLACES = [
   },
 ];
 
-const getPlaceById = (req, res, next) => {
+const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
-  const place = PLACES.find((p) => {
-    return p.id === placeId;
-  });
+  // findById.exec() will return a promise.
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (err) {
+    // If we have general some kind of problem, may be missing information.
+    const error = new HttpError("Fetching place faild, try again later.", 500);
+    return next(error);
+  }
 
+  // If we just don't have that place in our database;
   if (!place) {
-    throw new HttpError("Could not find a place for the provided id.");
+    const error = new HttpError(
+      "Could not find a place for the provided id.",
+      404
+    );
+    return next(error);
   }
 
   console.log("Places get request called");
-  res.json({ place }); //=> {place} => {place:place}
+  // mongoose adds an id getter to every document which returns id as a string
+  // such getters are lost when we call to object
+  // with getters:true we can avoid this.
+  res.json({ place: place.toObject({ getters: true }) }); //=> {place} => {place:place}
 };
 
 // Error: next is used in asynchronus program and throw Error is used in Syn.
@@ -38,30 +52,45 @@ const getPlaceById = (req, res, next) => {
 // There can by more than one place created by single user.
 const getPlacesByUserId = (req, res, next) => {
   const userId = req.params.uid;
-  const places = PLACES.filter(
-    (p) => p.creator === userId
-    // return u.creater === userId;
-  );
+  // const places = PLACES.filter(
+  //   (p) => p.creator === userId
+  //   // return u.creater === userId;
+  // );
+  let places;
+  try {
+    // - In MongoDb
+    // find returns cursor - cursor points to the find() results
+    // And it alows to iterate through different results we would have.
+    // It will return big amount of data - load
+    // - In Mongoose
+    // find() does not provide a cursor but directly an Array.
+    // to do so, we can use cursor property on our own.
+    places = Place.find({ creator: userId });
+  } catch (err) {
+    const error = new HttpError("Fetching place faild, try again later.", 500);
+    return next(error);
+  }
   if (!places) {
     // return res.status(404).json({ message: "Could not find place" });
-    return next(new Error("Could not find places for the provided id.", 4040));
+    return next(new Error("Could not find places for the provided id.", 404));
 
     // error.code = 404; //these lines were before creating errorClass
     // return next(error);
   }
-  res.json({ places });
+  res.json({ places: places.map((p) => p.toObject({ getters: true })) });
 };
 
-const deletePlace = (req, res, next) => {
+const deletePlace = async (req, res, next) => {
   const placeId = req.params.pid;
-  if (!PLACES.find((p) => p.id === placeId)) {
-    throw new HttpError("Could not find the place", 404);
+  try {
+    await Place.findByIdAndDelete(placeId);
+  } catch (err) {
+    const error = new HttpError("Could not delete Place", 500);
+    return next(error);
   }
-  PLACES = PLACES.filter((p) => p.id !== placeId);
-  res.status(201).json({ PLACES: PLACES });
 };
 
-const updatePlace = (req, res, next) => {
+const updatePlace = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     // 422 Invalid inputs
@@ -69,22 +98,37 @@ const updatePlace = (req, res, next) => {
     throw new HttpError("Invalid inputs passed, please check your inputs", 422);
   }
   const placeId = req.params.pid;
-  const placeIndex = PLACES.findIndex((p) => p.id === placeId);
+  // const placeIndex = PLACES.findIndex((p) => p.id === placeId);
   const { title, description, coordinates, address, creator } = req.body;
   // const updatedPlaces = [...PLACES];
 
   // const updatedPlace = PLACES[placeIndex]; //or the bottom one
-  const updatedPlace = { ...PLACES.find((p) => (p.id = placeId)) };
+  // const updatedPlace = { ...PLACES.find((p) => (p.id = placeId)) };
   // const updatedPlace = updatedPlaces[placeIndex];
-  updatedPlace.title = title;
-  updatedPlace.description = description;
-  updatedPlace.coordinates = coordinates;
-  updatedPlace.address = address;
-  updatedPlace.creator = creator;
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (err) {
+    const error = new HttpError("Could not update place, try again later.");
+    return next(error);
+  }
+  place.title = title;
+  place.description = description;
+  place.coordinates = coordinates;
+  place.address = address;
+  place.creator = creator;
+
+  try {
+    await place.save();
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not update place",
+      500
+    );
+  }
   // updatedPlaces[placeIndex] = updatedPlace;
   // PLACES = updatedPlaces;
-  PLACES[placeIndex] = updatedPlace;
-  res.status(201).json({ PLACES: PLACES });
+  res.status(200).json({ place: place.toObject({ getters: true }) });
 };
 
 // async is used because we are using await in getCoordinates;
@@ -98,14 +142,17 @@ const createPlace = async (req, res, next) => {
       new HttpError("Invalid inputs passed, please check your inputs", 422)
     );
   }
-
   const { title, description, address, creator } = req.body;
-  let coordinates;
-  try {
-    coordinates = await getCoordsForAddress(address);
-  } catch (error) {
-    return next(error);
-  }
+  // let coordinates;
+  let coordinates = {
+    lat: 40.740736,
+    lng: -73.9861576,
+  };
+  // try {
+  //   coordinates = await getCoordsForAddress(address);
+  // } catch (error) {
+  //   return next(error);
+  // }
 
   const createdPlace = new Place({
     title,
