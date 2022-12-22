@@ -12,7 +12,9 @@ const userSchema = new Schema({
     minLength: [8],
   },
   image: { type: String, required: true },
-  places: { type: String, required: true },
+  // Array will tell mongoose that we can have multiple values
+  // Eg: Can have multiple places for one user.
+  places: [{ type: mongoose.Types.ObjectId, required: true, ref: "Place" }],
 });
 
 userSchema.plugin(uniqueValidator);

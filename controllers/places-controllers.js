@@ -4,6 +4,7 @@ const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
 const Place = require("../models/place");
+const User = require("../models/user");
 
 const PLACES = [
   {
@@ -166,7 +167,19 @@ const createPlace = async (req, res, next) => {
       "https://img.traveltriangle.com/blog/wp-content/uploads/2021/11/shutterstock_1487009060.jpg",
     creator,
   });
-  // PLACES.push(createdPlace); // or .unshift(createdPlace)
+
+  let user;
+  try {
+    user = await User.findById(creator);
+  } catch (err) {
+    const error = new HttpError("Creating place failed, please try again", 500);
+    return next(error);
+  }
+  if (!user) {
+    const error = new HttpError("Could not find user for provided id", 404);
+    return next(error);
+  }
+
   try {
     await createdPlace.save();
   } catch {
