@@ -95,7 +95,10 @@ const updatePlace = async (req, res, next) => {
   if (!errors.isEmpty()) {
     // 422 Invalid inputs
     res.status(422);
-    throw new HttpError("Invalid inputs passed, please check your inputs", 422);
+    return new HttpError(
+      "Invalid inputs passed, please check your inputs",
+      422
+    );
   }
   const placeId = req.params.pid;
   // const placeIndex = PLACES.findIndex((p) => p.id === placeId);
@@ -163,7 +166,7 @@ const createPlace = async (req, res, next) => {
       "https://img.traveltriangle.com/blog/wp-content/uploads/2021/11/shutterstock_1487009060.jpg",
     creator,
   });
-  // PLACES.push(createdPlace); // or unshift(createdPlace)
+  // PLACES.push(createdPlace); // or .unshift(createdPlace)
   try {
     await createdPlace.save();
   } catch {

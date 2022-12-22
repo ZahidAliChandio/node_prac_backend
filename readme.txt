@@ -10,3 +10,5 @@ To convert address to coordinates.
 encodeURIComponent
 it will encode argument to url friendly format.
 to get rid of special characters or white space.
+
+mongoose unique validator (eg:emails of users)
