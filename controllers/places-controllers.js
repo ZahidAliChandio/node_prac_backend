@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 
 const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
@@ -168,20 +169,40 @@ const createPlace = async (req, res, next) => {
     creator,
   });
 
+  // To check, if we have that user in our User collection.
   let user;
   try {
     user = await User.findById(creator);
   } catch (err) {
-    const error = new HttpError("Creating place failed, please try again", 500);
+    // User not found
+    const error = new HttpError("Could not find user for provided id", 404);
     return next(error);
   }
+  // User not found
   if (!user) {
     const error = new HttpError("Could not find user for provided id", 404);
     return next(error);
   }
 
+  // Now we have to save place and add place id to User document too
+  // If both things succeeds then we want to continue and change our document.
+  // For this we need to use sessions and transections.
+  // Transaction - Perform mutliple operation in isolation of each other
+  // and to undo these operations.
+  // Transactions are build on sessions.
+  // To work with Transactions we first have to start a session.
+  // One transection is succesfull session is finished.
+  // And tha transaction is commited (operations successeded)
   try {
-    await createdPlace.save();
+    // For transactions if collection does not exist.
+    // Then we have to create collection manaully.
+    // As at start we don't have any collection.
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await createdPlace.save({ session: sess });
+    user.places.push(createdPlace);
+    await user.save({ session: sess });
+    await sess.commitTransaction();
   } catch {
     const error = new HttpError(
       "Creating place failed, please try again.",

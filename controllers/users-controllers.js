@@ -3,6 +3,7 @@ const { validationResult } = require("express-validator");
 
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
+const { default: mongoose } = require("mongoose");
 
 const USERS = [
   {
