@@ -7,20 +7,6 @@ const getCoordsForAddress = require("../util/location");
 const Place = require("../models/place");
 const User = require("../models/user");
 
-const PLACES = [
-  {
-    id: "p1",
-    title: "Empire State Building",
-    description: "One of the most famous sky scrapers in the world!",
-    location: {
-      lat: 40.7484472,
-      long: -73.9871516,
-    },
-    address: "20 W 34th St, New York, NY 1001",
-    creator: "u1",
-  },
-];
-
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
   // findById.exec() will return a promise.
@@ -52,34 +38,54 @@ const getPlaceById = async (req, res, next) => {
 // Error: next is used in asynchronus program and throw Error is used in Syn.
 
 // There can by more than one place created by single user.
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
   const userId = req.params.uid;
   // const places = PLACES.filter(
   //   (p) => p.creator === userId
   //   // return u.creater === userId;
   // );
+
+  // Approach 1
   let places;
+  // try {
+  //   // - In MongoDb
+  //   // find returns cursor - cursor points to the find() results
+  //   // And it alows to iterate through different results we would have.
+  //   // It will return big amount of data - load
+  //   // - In Mongoose
+  //   // find() does not provide a cursor but directly an Array.
+  //   // to do so, we can use cursor property on our own.
+  //   places = await Place.find({ creator: userId });
+  // } catch (err) {
+  //   const error = new HttpError("Fetching place faild, try again later.", 500);
+  //   return next(error);
+  // }
+
+  // Approach 2
+  let userWithPlaces;
   try {
-    // - In MongoDb
-    // find returns cursor - cursor points to the find() results
-    // And it alows to iterate through different results we would have.
-    // It will return big amount of data - load
-    // - In Mongoose
-    // find() does not provide a cursor but directly an Array.
-    // to do so, we can use cursor property on our own.
-    places = Place.find({ creator: userId });
+    userWithPlaces = await User.findById(userId).populate("places");
   } catch (err) {
     const error = new HttpError("Fetching place faild, try again later.", 500);
     return next(error);
   }
-  if (!places) {
+
+  // Approach 1
+  // if (!places places.length===0) {
+  // Approach 2
+  if (!userWithPlaces || userWithPlaces.places.length === 0) {
     // return res.status(404).json({ message: "Could not find place" });
     return next(new Error("Could not find places for the provided id.", 404));
 
     // error.code = 404; //these lines were before creating errorClass
     // return next(error);
   }
-  res.json({ places: places.map((p) => p.toObject({ getters: true })) });
+  // Approach 1
+  // res.json({ places: places.map((p) => p.toObject({ getters: true })) });
+  // Apporach 2
+  res.json({
+    places: userWithPlaces.places.map((p) => p.toObject({ getters: true })),
+  });
 };
 
 const deletePlace = async (req, res, next) => {

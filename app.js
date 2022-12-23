@@ -32,8 +32,9 @@ app.use((error, req, res, next) => {
 
 mongoose
   .connect(
-    "mongodb+srv://ZahidAli:ChandioAli11*@cluster0.cb7fetm.mongodb.net/?retryWrites=true&w=majority"
+    "mongodb+srv://ZahidAli:ChandioAli11*@cluster0.6v73fea.mongodb.net/?retryWrites=true&w=majority"
   )
+
   .then(() => {
     app.listen(8000, () => {
       console.log("Connected to DB Successfully");
