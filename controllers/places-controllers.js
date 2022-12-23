@@ -84,14 +84,41 @@ const getPlacesByUserId = (req, res, next) => {
 
 const deletePlace = async (req, res, next) => {
   const placeId = req.params.pid;
+  // We need to delete place id from User also
+  // We need to access to a user document and override our change.
+  // For this populate is used.
+  // And for this we need relation b/w these documents.
+  let place;
   try {
-    await Place.findByIdAndDelete(placeId);
+    // await Place.findByIdAndDelete(placeId);
+    place = await Place.findById(placeId).populate("creator");
   } catch (err) {
-    const error = new HttpError("Could not delete Place", 500);
+    const error = new HttpError(
+      "Something went wrong, could not delete Place",
+      500
+    );
     return next(error);
   }
+  if (!place) {
+    const error = new HttpError("Could not find place for provide id.", 404);
+    return next(error);
+  }
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    place.remove({ session: sess });
+    place.creator.places.pull(place);
+    await place.creator.save({ session: sess });
+    await sess.commitTransaction();
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, Could not delete place",
+      500
+    );
+    return next(error);
+  }
+  res.status(200).json({ message: "Deleted place." });
 };
-
 const updatePlace = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -175,7 +202,10 @@ const createPlace = async (req, res, next) => {
     user = await User.findById(creator);
   } catch (err) {
     // User not found
-    const error = new HttpError("Could not find user for provided id", 404);
+    const error = new HttpError(
+      "Creating place failed, please try again.",
+      500
+    );
     return next(error);
   }
   // User not found
