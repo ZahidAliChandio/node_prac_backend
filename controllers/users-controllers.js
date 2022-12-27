@@ -92,9 +92,13 @@ const signup = async (req, res, next) => {
   }
 
   // res.status(201).json({ user: createdUser.toObject({ getters: true }) });
-  res
-    .status(201)
-    .json({ userId: createdUser.id,userName:createdUser.name, email: createdUser.email, token: token,places:createdUser.places });
+  res.status(201).json({
+    userId: createdUser.id,
+    userName: createdUser.name,
+    email: createdUser.email,
+    token: token,
+    places: createdUser.places,
+  });
 };
 
 const login = async (req, res, next) => {
@@ -155,6 +159,8 @@ const login = async (req, res, next) => {
     return next(error);
   }
   res.json({
+    message: "Logged in!",
+    users: isRegistered.toObject({ getters: true }),
     userId: isRegistered.id,
     email: isRegistered.email,
     token: token,
