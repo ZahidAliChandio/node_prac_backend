@@ -1,5 +1,6 @@
 const express = require("express");
 const { check } = require("express-validator");
+const checkAuth = require("../middlewares/check-auth");
 
 const {
   getPlaceById,
@@ -16,6 +17,10 @@ const router = express.Router();
 router.get("/:pid", getPlaceById);
 
 router.get("/user/:uid", getPlacesByUserId);
+
+// Adding middleware here means above routes are open to everyone
+
+router.use(checkAuth);
 
 router.post(
   "/",

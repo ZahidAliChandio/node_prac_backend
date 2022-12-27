@@ -12,6 +12,19 @@ const app = express();
 
 app.use(bodyParser.json());
 
+// To allow CORS (its due to browser security)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  //Which headers incoming request may have
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin,X-Requested-With,Content-Type,Acces,Authorization"
+  );
+  // Which http methods may be attached to the incoming requests.
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH", "DELETE");
+  next();
+});
+
 app.use("/api/places", placesRoutes);
 app.use("/api/users", usersRoutes);
 

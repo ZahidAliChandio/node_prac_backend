@@ -12,3 +12,6 @@ it will encode argument to url friendly format.
 to get rid of special characters or white space.
 
 mongoose unique validator (eg:emails of users)
+
+node js library to encrypt passwords (to create hash passwords)
+npm i bycrypt.js

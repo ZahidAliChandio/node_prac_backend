@@ -1,18 +1,11 @@
 const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
-const { default: mongoose } = require("mongoose");
-
-const USERS = [
-  {
-    id: "u1",
-    name: "Zahid Ali",
-    email: "test@test.com",
-    password: "testers",
-  },
-];
+// const mongoose = require("mongoose");
 
 const getUsers = async (req, res, next) => {
   let users;
@@ -56,12 +49,21 @@ const signup = async (req, res, next) => {
     );
     return next(error);
   }
+
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    const error = new HttpError("Signing up failed, please try again.", 500);
+    return next(error);
+  }
+
   const createdUser = new User({
     name,
     email,
     image:
       "https://images.unsplash.com/photo-1597431842922-d9686a23baa6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8fHx8fHx8MTY3MTcxMDI0Mg&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1080",
-    password,
+    password: hashedPassword,
     places: [],
   });
   try {
@@ -70,15 +72,37 @@ const signup = async (req, res, next) => {
     const error = new HttpError("Signing up failed, please try again.", 500);
     return next(error);
   }
-  res.status(201).json({ user: createdUser.toObject({ getters: true }) });
+
+  let token;
+  // id is mongodb auto generated id for this user.
+  // supersecret_dont_share is private key that only the server knows.
+  // Which you never ever share with any client.
+  // last argument is optional - configure the token eg:token expiry
+  // letting the token to expire is recomended.
+  // does not return promise but could fail - try,catch
+  try {
+    token = jwt.sign(
+      { userId: createdUser.id, email: createdUser.email },
+      "supersecret_dont_share",
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    const error = new HttpError("Signing up failed, please try again.", 500);
+    return next(error);
+  }
+
+  // res.status(201).json({ user: createdUser.toObject({ getters: true }) });
+  res
+    .status(201)
+    .json({ userId: createdUser.id,userName:createdUser.name, email: createdUser.email, token: token,places:createdUser.places });
 };
 
 const login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  let alreadyRegistered;
+  let isRegistered;
   try {
-    alreadyRegistered = await User.findOne({ email: email });
+    isRegistered = await User.findOne({ email: email });
   } catch (err) {
     const error = new HttpError(
       "Database Search failed, please try again later.",
@@ -86,7 +110,8 @@ const login = async (req, res, next) => {
     );
     return next(error);
   }
-  if (!alreadyRegistered || alreadyRegistered.password !== password) {
+  // if (!isRegistered || isRegistered.password !== password) {
+  if (!isRegistered) {
     // 401 => wrong credentials
     const error = new HttpError(
       "Could not identify user, credentials seem to be wrong.",
@@ -94,7 +119,46 @@ const login = async (req, res, next) => {
     );
     return next(error);
   }
-  res.json({ message: "Logged in" });
+
+  let isValidPassword = false;
+  try {
+    isValidPassword = await bcrypt.compare(password, isRegistered.password);
+  } catch (err) {
+    const error = new HttpError(
+      "Could not log in, credentials seem to be wrong.",
+      500
+    );
+    return next(error);
+  }
+  if (!isValidPassword) {
+    const error = new HttpError(
+      "Invalid credentials, could not log you in.",
+      500
+    );
+    return next(error);
+  }
+  let token;
+  // id is mongodb auto generated id for this user.
+  // supersecret_dont_share is private key that only the server knows.
+  // Which you never ever share with any client.
+  // last argument is optional - configure the token
+  // letting the token expire is recomended.
+  // does not return promise but could fail - try,catch
+  try {
+    token = jwt.sign(
+      { userId: isRegistered.id, email: isRegistered.email },
+      "supersecret_dont_share",
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    const error = new HttpError("Logging in failed, please try again.", 500);
+    return next(error);
+  }
+  res.json({
+    userId: isRegistered.id,
+    email: isRegistered.email,
+    token: token,
+  });
 };
 
 exports.getUsers = getUsers;
