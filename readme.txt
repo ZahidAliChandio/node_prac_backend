@@ -15,3 +15,5 @@ mongoose unique validator (eg:emails of users)
 
 node js library to encrypt passwords (to create hash passwords)
 npm i bycrypt.js
+multer -> for multiple types of data - json,files...
+add multer logic on routes.
