@@ -27,8 +27,6 @@ const getPlaceById = async (req, res, next) => {
     );
     return next(error);
   }
-
-  console.log("Places get request called");
   // mongoose adds an id getter to every document which returns id as a string
   // such getters are lost when we call to object
   // with getters:true we can avoid this.
@@ -137,7 +135,7 @@ const updatePlace = async (req, res, next) => {
   }
   const placeId = req.params.pid;
   // const placeIndex = PLACES.findIndex((p) => p.id === placeId);
-  const { title, description, coordinates, address, creator } = req.body;
+  const { title, description } = req.body;
   // const updatedPlaces = [...PLACES];
 
   // const updatedPlace = PLACES[placeIndex]; //or the bottom one
@@ -152,9 +150,6 @@ const updatePlace = async (req, res, next) => {
   }
   place.title = title;
   place.description = description;
-  place.coordinates = coordinates;
-  place.address = address;
-  place.creator = creator;
 
   try {
     await place.save();
@@ -213,6 +208,9 @@ const createPlace = async (req, res, next) => {
       500
     );
     return next(error);
+  }
+  if (user) {
+    console.log("user found");
   }
   // User not found
   if (!user) {
