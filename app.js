@@ -1,3 +1,6 @@
+const fs = require("fs");
+const path = require("path");
+
 // app.js refers to server.js
 const express = require("express");
 const mongoose = require("mongoose");
@@ -11,6 +14,8 @@ mongoose.set("strictQuery", false);
 const app = express();
 
 app.use(bodyParser.json());
+
+app.use("/uploads/images", express.static(path.join("uploads", "images")));
 
 // To allow CORS (its due to browser security)
 app.use((req, res, next) => {
@@ -36,6 +41,13 @@ app.use((req, res, next) => {
 
 // If some error occurs
 app.use((error, req, res, next) => {
+  // multer adds this file property to req.
+  // To rollback transaction if error at any point occurs.
+  if (req.file) {
+    fs.unlink(req.file.path, (err) => {
+      console.log(err);
+    });
+  }
   if (res.headerSent) {
     return next(error);
   }

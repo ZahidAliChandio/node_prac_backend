@@ -18,8 +18,8 @@ const fileUpload = multer({
       cb(null, "uploads/images");
     },
     filename: (req, file, cb) => {
-      const extension = MIME_TYPE_MAP(file.mimetype);
-      cb(null, uuidv4() + "." + ext);
+      const extension = MIME_TYPE_MAP[file.mimetype];
+      cb(null, uuidv4() + "." + extension);
     },
   }),
   // To allow only accepted extensions to be uploaded.
