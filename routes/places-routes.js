@@ -22,7 +22,7 @@ router.get("/user/:uid", getPlacesByUserId);
 // Adding middleware here means above routes are open to everyone
 
 // Token Authorization
-// router.use(checkAuth);
+router.use(checkAuth);
 
 router.post(
   "/",

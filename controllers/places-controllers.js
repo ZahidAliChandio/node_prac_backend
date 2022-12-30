@@ -1,3 +1,5 @@
+const fs = require("fs");
+
 const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
@@ -107,6 +109,17 @@ const deletePlace = async (req, res, next) => {
     const error = new HttpError("Could not find place for provide id.", 404);
     return next(error);
   }
+
+  if (place.creator.id !== req.userData.userId) {
+    if (place.creator.toString() !== req.userData.userId) {
+      // 401 is an authorization error.
+      const error = new HttpError("Not Authorized to delete this place.", 401);
+      return next(error);
+    }
+  }
+
+  const imagePath = place.image;
+
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
@@ -121,8 +134,12 @@ const deletePlace = async (req, res, next) => {
     );
     return next(error);
   }
+  fs.unlink(imagePath, (err) => {
+    console.log(err);
+  });
   res.status(200).json({ message: "Deleted place." });
 };
+
 const updatePlace = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -148,6 +165,18 @@ const updatePlace = async (req, res, next) => {
     const error = new HttpError("Could not update place, try again later.");
     return next(error);
   }
+
+  // Authorization
+
+  // Allow only creator(owner) to update place.
+  // userData is attached during token creation.
+  // converting mongoose object type(creator) to string to compare.
+  if (place.creator.toString() !== req.userData.userId) {
+    // 401 is an authorization error.
+    const error = new HttpError("Not Authorized to update this place.", 401);
+    return next(error);
+  }
+
   place.title = title;
   place.description = description;
 
@@ -175,7 +204,7 @@ const createPlace = async (req, res, next) => {
       new HttpError("Invalid inputs passed, please check your inputs", 422)
     );
   }
-  const { title, description, address, creator } = req.body;
+  const { title, description, address } = req.body;
   // let coordinates;
   let coordinates = {
     lat: 40.740736,
@@ -193,13 +222,13 @@ const createPlace = async (req, res, next) => {
     address,
     location: coordinates,
     image: req.file.path,
-    creator,
+    creator: req.userData.userId,
   });
 
   // To check, if we have that user in our User collection.
   let user;
   try {
-    user = await User.findById(creator);
+    user = await User.findById(req.userData.userId);
   } catch (err) {
     // User not found
     const error = new HttpError(

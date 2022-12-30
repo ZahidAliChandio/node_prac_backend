@@ -30,7 +30,8 @@ module.exports = (req, res, next) => {
     next();
   } catch (err) {
     //catch - if authorization header is not set and split() crashes.
-    const error = new HttpError("Authentication failed!", 401);
+    // 403 invalid credentials
+    const error = new HttpError("Authentication failed!", 403);
     return next(error);
   }
 };

@@ -118,7 +118,7 @@ const login = async (req, res, next) => {
     // 401 => wrong credentials
     const error = new HttpError(
       "Could not identify user, credentials seem to be wrong.",
-      401
+      403
     );
     return next(error);
   }
@@ -136,7 +136,7 @@ const login = async (req, res, next) => {
   if (!isValidPassword) {
     const error = new HttpError(
       "Invalid credentials, could not log you in.",
-      500
+      403
     );
     return next(error);
   }
@@ -145,7 +145,7 @@ const login = async (req, res, next) => {
   // supersecret_dont_share is private key that only the server knows.
   // Which you never ever share with any client.
   // last argument is optional - configure the token
-  // letting the token expire is recomended.
+  // letting the token expire is recomended (last argument).
   // does not return promise but could fail - try,catch
   try {
     token = jwt.sign(
@@ -159,7 +159,7 @@ const login = async (req, res, next) => {
   }
   res.json({
     message: "Logged in!",
-    users: isRegistered.toObject({ getters: true }),
+    // users: isRegistered.toObject({ getters: true }),
     userId: isRegistered.id,
     email: isRegistered.email,
     token: token,
