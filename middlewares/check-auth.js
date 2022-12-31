@@ -24,7 +24,7 @@ module.exports = (req, res, next) => {
     }
     // decodedToken - Payload that was encoded into that token.
     // We stored/added email and id in the token's payload.
-    const decodedToken = jwt.verify(token, "supersecret_dont_share");
+    const decodedToken = jwt.verify(token, process.env.DB_USER);
     // We can always dynamically add data to req body.
     req.userData = { userId: decodedToken.userId };
     next();

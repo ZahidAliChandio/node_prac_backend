@@ -17,3 +17,14 @@ node js library to encrypt passwords (to create hash passwords)
 npm i bycrypt.js
 multer -> for multiple types of data - json,files...
 add multer logic on routes.
+
+Deployment
+-nodemon.json
+//We can give any names eg:DB_USERNAME
+{
+  "env": {
+    "DB_USER": "ZahidAli",
+    "DB_PASSWORD": "ChandioAli11*",
+    "DB_NAME": ""
+  }
+}

@@ -55,9 +55,10 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occured" });
 });
 
+// process.env code is in nodemon.js
 mongoose
   .connect(
-    "mongodb+srv://ZahidAli:ChandioAli11*@cluster0.6v73fea.mongodb.net/?retryWrites=true&w=majority"
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.6v73fea.mongodb.net/?retryWrites=true&w=majority`
   )
 
   .then(() => {
